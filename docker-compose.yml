@@ -1,0 +1,75 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: rf-mongo
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: rf-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data:/data
+
+  control-panel:
+    image: public.ecr.aws/a6m6j8g7/remote-falcon-control-panel:latest
+    container_name: rfcp
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - redis
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      AUTO_VALIDATE_EMAIL: "true"
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/remote-falcon
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      WATTSON_KEY: dev-not-real
+      S3_ACCESSKEY: dev-not-real
+      S3_SECRETKEY: dev-not-real
+      S3_ENDPOINT: https://nyc3.digitaloceanspaces.com
+      JWT_USER: dev-jwt-secret-not-real
+      GITHUB_PAT: dev-not-real
+      SENDGRID_KEY: dev-not-real
+
+  viewer:
+    image: public.ecr.aws/a6m6j8g7/remote-falcon-viewer:latest
+    container_name: rfv
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - "8082:8080"
+    environment:
+      MONGO_URI: mongodb://mongo:27017/remote-falcon
+      QUARKUS_OTEL_ENABLED: "false"
+
+  ui:
+    image: public.ecr.aws/a6m6j8g7/remote-falcon-ui:latest
+    container_name: rfui
+    restart: unless-stopped
+    depends_on:
+      - control-panel
+      - viewer
+    ports:
+      - "4173:3000"
+    environment:
+      HOST_ENV: local
+      CONTROL_PANEL_API: http://localhost:8081/remote-falcon-control-panel
+      VIEWER_API: http://localhost:8082/remote-falcon-viewer
+      HOSTNAME_PARTS: "1"
+      SWAP_CP: "false"
+      VIEWER_PAGE_SUBDOMAIN: http://localhost:4173
+      SOCIAL_META: ""
+
+volumes:
+  mongo-data:
+  redis-data:

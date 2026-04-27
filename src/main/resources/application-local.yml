@@ -1,5 +1,5 @@
 web:
-  url: "http://localhost:3000"
+  url: "http://localhost:4173"
 
 server:
   port: 8081
@@ -7,4 +7,4 @@ server:
 client:
   header: "CF-Connecting-IP"
 
-auto-validate-email: false
+auto-validate-email: true
