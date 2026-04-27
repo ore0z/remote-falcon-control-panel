@@ -1,5 +1,5 @@
 web:
-  url: "http://localhost:4173"
+  url: "${WEB_URL:http://localhost:4173}"
 
 server:
   port: 8081
